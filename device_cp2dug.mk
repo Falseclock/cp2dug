@@ -20,5 +20,5 @@ PRODUCT_COPY_FILES += \
 $(call inherit-product, build/target/product/full.mk)
 
 PRODUCT_BUILD_PROP_OVERRIDES += BUILD_UTC_DATE=0
-PRODUCT_NAME := full_cp2dug
+PRODUCT_NAME := cp2dug
 PRODUCT_DEVICE := cp2dug

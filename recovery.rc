@@ -1,0 +1,99 @@
+on early-init
+    start ueventd
+
+on init
+    export PATH /sbin:/system/sbin:/system/bin:/system/xbin:/bin:/vendor/bin
+    export ANDROID_ROOT /system
+    export ANDROID_DATA /data
+    export EXTERNAL_STORAGE /sdcard
+
+loglevel 7
+
+    symlink /system/etc /etc
+
+    mkdir /sdcard
+    mkdir /system
+    mkdir /data
+    mkdir /data/data
+    mkdir /data/property
+    mkdir /cache
+    mkdir /rfs
+    mkdir /devlog
+    mkdir /mtdcache
+    mkdir /internal_sdcard
+    mount /tmp /tmp tmpfs
+
+    chown root shell /tmp
+    chmod 0775 /tmp
+
+
+on boot
+
+    ifup lo
+    hostname localhost
+    domainname localdomain
+
+    class_start default
+
+service ueventd /sbin/ueventd
+    critical
+
+service choice_fn /sbin/choice_fn
+    oneshot
+
+
+service flashlessd /sbin/flashlessd
+    user root
+    group root
+    disabled
+
+service via_router /sbin/via_router
+    disabled
+    oneshot
+
+service via_ets /sbin/via_ets
+    disabled
+    oneshot
+
+service recovery /sbin/recovery
+    disabled
+
+service offmode_charging /sbin/offmode_charging
+    disabled
+    oneshot
+
+service detect_key /sbin/detect_key
+    disabled
+    oneshot
+
+service adbd /sbin/adbd recovery
+    disabled
+
+# Always start adbd on userdebug and eng builds
+on property:ro.debuggable=1
+    write /sys/class/android_usb/android0/enable 0
+    write /sys/class/android_usb/android0/idVendor 0BB4
+    write /sys/class/android_usb/android0/idProduct D001
+    write /sys/class/android_usb/android0/functions adb
+    write /sys/class/android_usb/android0/enable 1
+    write /sys/class/android_usb/android0/iManufacturer $ro.product.manufacturer
+    write /sys/class/android_usb/android0/iProduct $ro.product.model
+    write /sys/class/android_usb/android0/iSerial $ro.serialno
+    start adbd
+
+# Restart adbd so it can run as root
+on property:service.adb.root=1
+    write /sys/class/android_usb/android0/enable 0
+    restart adbd
+    write /sys/class/android_usb/android0/enable 1
+service recy_klog /system/bin/sh /system/xbin/recy_klog.sh
+    user root
+    group root
+    disabled
+
+service recy_lastkmsg /system/bin/sh /system/xbin/recy_lastkmsg.sh
+    user root
+    group root
+    disabled
+
+on property:persist.service.recy_log.enable=1
